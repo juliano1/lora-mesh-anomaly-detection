@@ -1,0 +1,6 @@
+# Scripts de linha de comando. monitor_mqtt.py só precisa do paho-mqtt;
+# extract_features, inject_anomalies, export/import/audit e train_* usam também o backend;
+# train_lstm.py e train_cascade.py exigem ainda backend/requirements-lstm.txt.
+-r ../backend/requirements.txt
+pandas==2.3.3
+pyarrow==26.0.0

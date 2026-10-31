@@ -1,0 +1,3 @@
+# Núcleo + driver PostgreSQL (opcional; o padrão é SQLite).
+-r requirements.txt
+psycopg2-binary==2.9.13

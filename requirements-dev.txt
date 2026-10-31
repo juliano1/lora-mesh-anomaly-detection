@@ -1,0 +1,10 @@
+# Ambiente de desenvolvimento e testes: todos os perfis + ferramentas.
+#   pip install -r requirements-dev.txt -c requirements-lock.txt \
+#       --extra-index-url https://download.pytorch.org/whl/cpu
+-r backend/requirements-lstm.txt
+-r backend/requirements-postgres.txt
+-r scripts/requirements.txt
+-r importacao_arquivos_csv/codigos/requirements_001_isolation_forest_sklearn.txt
+pytest==9.2.0
+httpx==0.28.1
+ruff==0.17.3

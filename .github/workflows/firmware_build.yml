@@ -1,0 +1,51 @@
+name: Firmware Build — Heltec V2
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware_build.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware_build.yml'
+
+jobs:
+  build-heltec-v2:
+    name: Build ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [heltec_v2, heltec_v2_gateway]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-pio-${{ hashFiles('firmware/platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar PlatformIO
+        run: pip install platformio==6.1.19
+
+      - name: Build com credenciais fictícias
+        working-directory: firmware
+        run: |
+          cp include/credentials.h.example include/credentials.h
+          pio run -e ${{ matrix.environment }}

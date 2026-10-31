@@ -1,0 +1,10 @@
+# Preservar no Git os documentos desta estrutura; manter os datasets e as
+# execuções locais fora do versionamento. Esses arquivos exigem arquivo próprio.
+/entrada_csv/*
+!/entrada_csv/README.md
+/resultados/*
+!/resultados/README.md
+!/resultados/MODELO_RELATORIO.md
+
+# Ambiente Python independente, se criado nesta pasta.
+/.venv/

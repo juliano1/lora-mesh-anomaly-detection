@@ -1,0 +1,123 @@
+diff --git a/src/BuildOptions.h b/src/BuildOptions.h
+--- a/src/BuildOptions.h
++++ b/src/BuildOptions.h
+@@ -75,7 +75,9 @@
+ //MAX payload size for hello packets = LM_MAX_PACKET_SIZE - 7 bytes of header
+ //MAX payload size for data packets = LM_MAX_PACKET_SIZE - 7 bytes of header - 2 bytes of via
+ //MAX payload size for reliable and large packets = LM_MAX_PACKET_SIZE - 7 bytes of header - 2 bytes of via - 3 of control packet
++#ifndef LM_MAX_PACKET_SIZE
+ #define LM_MAX_PACKET_SIZE 100
++#endif
+ 
+ // Packet types
+ #define NEED_ACK_P 0b00000011
+diff --git a/src/LoraMesher.cpp b/src/LoraMesher.cpp
+--- a/src/LoraMesher.cpp
++++ b/src/LoraMesher.cpp
+@@ -689 +689 @@
+-                    RoutingTableService::processRoute(reinterpret_cast<RoutePacket*>(rx->packet), rx->snr);
++                    RoutingTableService::processRoute(reinterpret_cast<RoutePacket*>(rx->packet), rx->snr, rx->rssi);
+diff --git a/src/LoraMesher.h b/src/LoraMesher.h
+--- a/src/LoraMesher.h
++++ b/src/LoraMesher.h
+@@ -236,6 +236,20 @@
+     void setReceiveAppDataTaskHandle(TaskHandle_t ReceiveAppDataTaskHandle) { ReceiveAppData_TaskHandle = ReceiveAppDataTaskHandle; }
+ 
+     /**
++     * @brief Get RSSI of the last received packet from RadioLib
++     * 
++     * @return float RSSI in dBm
++     */
++    float getLastPacketRSSI() { return radio ? radio->getRSSI() : -999.0f; }
++    
++    /**
++     * @brief Get SNR of the last received packet from RadioLib
++     * 
++     * @return float SNR in dB
++     */
++    float getLastPacketSNR() { return radio ? radio->getSNR() : -999.0f; }
++
++    /**
+      * @brief A copy of the routing table list. Delete it after using the list.
+      *
+      */
+diff --git a/src/entities/routingTable/RouteNode.h b/src/entities/routingTable/RouteNode.h
+--- a/src/entities/routingTable/RouteNode.h
++++ b/src/entities/routingTable/RouteNode.h
+@@ -34,6 +34,12 @@
+     int8_t receivedSNR = 0;
+ 
+     /**
++     * @brief RSSI from received packets. Only available nodes at 1 hop.
++     *
++     */
++    int8_t receivedRSSI = 0;
++
++    /**
+      * @brief SNR from sent packets. Only available nodes at 1 hop.
+      *
+      */
+diff --git a/src/services/RoutingTableService.cpp b/src/services/RoutingTableService.cpp
+--- a/src/services/RoutingTableService.cpp
++++ b/src/services/RoutingTableService.cpp
+@@ -67,7 +67,7 @@
+     return node->networkNode.metric;
+ }
+ 
+-void RoutingTableService::processRoute(RoutePacket* p, int8_t receivedSNR) {
++void RoutingTableService::processRoute(RoutePacket* p, int8_t receivedSNR, int8_t receivedRSSI) {
+     if ((p->packetSize - sizeof(RoutePacket)) % sizeof(NetworkNode) != 0) {
+         ESP_LOGE(LM_TAG, "Invalid route packet size");
+         return;
+@@ -80,7 +80,7 @@
+     processRoute(p->src, receivedNode);
+     delete receivedNode;
+ 
+-    resetReceiveSNRRoutePacket(p->src, receivedSNR);
++    resetReceiveSNRRoutePacket(p->src, receivedSNR, receivedRSSI);
+ 
+     for (size_t i = 0; i < numNodes; i++) {
+         NetworkNode* node = &p->networkNodes[i];
+@@ -91,14 +91,15 @@
+     printRoutingTable();
+ }
+ 
+-void RoutingTableService::resetReceiveSNRRoutePacket(uint16_t src, int8_t receivedSNR) {
++void RoutingTableService::resetReceiveSNRRoutePacket(uint16_t src, int8_t receivedSNR, int8_t receivedRSSI) {
+     RouteNode* rNode = findNode(src);
+     if (rNode == nullptr)
+         return;
+ 
+-    ESP_LOGI(LM_TAG, "Reset Receive SNR from %X: %d", src, receivedSNR);
++    ESP_LOGI(LM_TAG, "Reset Receive SNR/RSSI from %X: SNR=%d RSSI=%d", src, receivedSNR, receivedRSSI);
+ 
+     rNode->receivedSNR = receivedSNR;
++    rNode->receivedRSSI = receivedRSSI;
+ }
+ 
+ void RoutingTableService::processRoute(uint16_t via, NetworkNode* node) {
+diff --git a/src/services/RoutingTableService.h b/src/services/RoutingTableService.h
+--- a/src/services/RoutingTableService.h
++++ b/src/services/RoutingTableService.h
+@@ -100,16 +100,18 @@
+ 	  *
+ 	  * @param p Route Packet
+ 	  * @param receivedSNR Received SNR
++	  * @param receivedRSSI Received RSSI
+ 	  */
+-	static void processRoute(RoutePacket* p, int8_t receivedSNR);
++	static void processRoute(RoutePacket* p, int8_t receivedSNR, int8_t receivedRSSI);
+ 
+ 	/**
+-	 * @brief Reset the SNR from the Route Node received
++	 * @brief Reset the SNR and RSSI from the Route Node received
+ 	 *
+ 	 * @param src Source address
+ 	 * @param receivedSNR Received SNR
++	 * @param receivedRSSI Received RSSI
+ 	 */
+-	static void resetReceiveSNRRoutePacket(uint16_t src, int8_t receivedSNR);
++	static void resetReceiveSNRRoutePacket(uint16_t src, int8_t receivedSNR, int8_t receivedRSSI);
+ 
+ 	/**
+ 	 * @brief Reset the SNR from the Route Node Sent

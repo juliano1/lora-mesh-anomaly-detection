@@ -1,0 +1,22 @@
+# ACL do broker local. Copie para "acl" no mesmo diretório e ajuste os usuários.
+# Crie as senhas (o arquivo password_file é ignorado pelo Git):
+#   docker run --rm -it -v "$PWD/scripts/mosquitto/config:/mosquitto/config" eclipse-mosquitto:2 \
+#     mosquitto_passwd -c /mosquitto/config/password_file gateway-rede1
+#   docker run --rm -it -v "$PWD/scripts/mosquitto/config:/mosquitto/config" eclipse-mosquitto:2 \
+#     mosquitto_passwd /mosquitto/config/password_file backend
+# O gateway usa MQTT_USER/MQTT_PASSWORD em credentials.h; o backend, MQTT_USER/MQTT_PASS no .env.
+
+# Um usuário por gateway, preso ao NETWORK_ID gravado no firmware: o backend deduz a
+# rede pelo tópico, então um curinga aqui deixaria um gateway falar por outra rede.
+# Repita o bloco para cada rede (gateway-rede2 com lab/2/..., e assim por diante).
+user gateway-rede1
+topic write lab/1/uplink
+topic write lab/1/send_result
+topic read lora/mesh/1/command
+
+# Backend: lê telemetria/resultados, envia comandos e publica status dos nós.
+user backend
+topic read lab/+/uplink
+topic read lab/+/send_result
+topic write lora/mesh/+/command
+topic write lora/status

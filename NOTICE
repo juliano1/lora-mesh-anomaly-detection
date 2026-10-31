@@ -1,0 +1,29 @@
+lora-mesh-anomaly-detection
+Copyright (c) 2026 Juliano. Distribuído sob a licença MIT (arquivo LICENSE).
+
+Componentes de terceiros
+========================
+
+Nenhum código-fonte de terceiros é copiado neste repositório, com a exceção abaixo.
+As bibliotecas são baixadas pelo PlatformIO e pelo pip nas versões fixadas em
+firmware/platformio.ini, backend/requirements*.txt e requirements-lock.txt, e
+continuam sob as licenças dos respectivos autores.
+
+firmware/patches/loramesher_rssi_fix.patch
+    Diferença aplicada sobre a LoRaMesher (commit d37dee7b69866dd052d342174e2e441bd356f068),
+    contendo trechos de contexto do código original.
+    LoRaMesher — Copyright (c) 2021 LoRaMesher — licença MIT.
+    https://github.com/LoRaMesher/LoRaMesher
+    Texto integral da licença: firmware/patches/LICENSE.LoRaMesher
+
+Bibliotecas do firmware (não redistribuídas)
+    RadioLib 7.7.1          — Copyright (c) 2018 Jan Gromeš — MIT
+    PubSubClient 2.8.0      — Copyright (c) 2008-2020 Nicholas O'Leary — MIT
+    ArduinoJson 6.21.6      — Copyright (c) Benoit Blanchon — MIT
+    U8g2 2.36.18            — olikraus — BSD de 2 cláusulas
+    Arduino-ESP32 / ESP-IDF (plataforma espressif32 6.5.0) — Espressif Systems — Apache-2.0 e LGPL-2.1 (core Arduino)
+
+Bibliotecas Python (não redistribuídas)
+    As dependências Python (FastAPI, SQLModel, scikit-learn, PyTorch, pandas,
+    entre outras) são instaladas pelo usuário a partir do PyPI e mantêm as licenças
+    publicadas por seus projetos.

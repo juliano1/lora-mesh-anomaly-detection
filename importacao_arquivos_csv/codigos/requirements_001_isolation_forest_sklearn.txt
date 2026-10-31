@@ -1,0 +1,7 @@
+# Detector 001 (Isolation Forest, scikit-learn): dependências diretas, nas versões testadas.
+# Testado em 2026-10-20 com Python 3.11.14 e com Python 3.12.3 (ambiente virtual novo).
+# Os testes usam também pytest==9.2.0 (não é necessário para executar o detector).
+pandas==2.3.3
+numpy==2.3.5
+scikit-learn==1.8.0
+matplotlib==3.10.8

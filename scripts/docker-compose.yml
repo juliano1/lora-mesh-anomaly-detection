@@ -1,0 +1,19 @@
+# Broker MQTT local. Antes de subir, crie scripts/mosquitto/config/password_file e
+# scripts/mosquitto/config/acl (veja acl.example).
+#
+# Por padrão a porta só aceita conexões do próprio computador. Para o gateway (na WiFi)
+# conectar, troque "127.0.0.1" pelo IP da interface da rede de laboratório isolada.
+# Se outro broker já usa a porta 1883 nesta máquina, suba com MQTT_HOST_PORT=1884 (por
+# exemplo) e aponte MQTT_PORT do backend e do firmware para ela.
+# O nome do projeto isola o contêiner de outros composes (sem container_name fixo).
+name: lora-mesh-anomaly-detection
+services:
+  mosquitto:
+    # Digest da 2.1.2 verificada nos testes; atualize de propósito, não por acaso.
+    image: eclipse-mosquitto:2@sha256:9cfdd46ad59f3e3e5f592f6baf57ab23e1ad00605509d0f5c1e9b179c5314d87
+    ports:
+      - "127.0.0.1:${MQTT_HOST_PORT:-1883}:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - ./mosquitto/data:/mosquitto/data
+    restart: unless-stopped

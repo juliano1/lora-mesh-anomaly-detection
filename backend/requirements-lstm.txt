@@ -1,0 +1,7 @@
+# Núcleo + LSTM-AE na detecção online. Para scripts/train_lstm.py e train_cascade.py,
+# instale também scripts/requirements.txt.
+# Wheel CPU do PyTorch (evita baixar as bibliotecas CUDA):
+#   pip install -r backend/requirements-lstm.txt --extra-index-url https://download.pytorch.org/whl/cpu
+# torch >= 2.13 corrige GHSA-63cw-57p8-fm3p e CVE-2025-3000.
+-r requirements.txt
+torch==2.14.1
