@@ -20,6 +20,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from artifact_versions import version_matches
+
 logger = logging.getLogger(__name__)
 
 PAYLOAD = "bundle.joblib"
@@ -78,7 +80,8 @@ def save_bundle(pipeline, network_id: int, base_dir: str, reason: str) -> dict:
 
 def load_latest_bundle(network_id: int, model_signature, base_dir: str) -> Optional[tuple[dict, dict]]:
     """(manifesto, pacote) mais recente compatível com a assinatura dos modelos e o
-    vetor de features atuais; None se não houver. Payload adulterado é recusado."""
+    vetor de features atuais; None se não houver. Divergência do hash é recusada;
+    o manifesto não autentica a origem do pacote."""
     import joblib
     from ai.online.pipeline import _jsonable
     root = Path(base_dir) / f"network_{int(network_id)}"
@@ -100,7 +103,8 @@ def load_latest_bundle(network_id: int, model_signature, base_dir: str) -> Optio
             continue
         if manifest.get("model_signature") != wanted:
             continue
-        if any(manifest.get(k) != v for k, v in identity.items()):
+        if (not version_matches(manifest.get("feature_schema_version"), identity["feature_schema_version"])
+                or manifest.get("feature_order") != identity["feature_order"]):
             logger.warning(f"pacote {folder.name} ignorado — vetor de features diferente")
             continue
         if _sha256(payload) != manifest.get("payload_sha256"):

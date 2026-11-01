@@ -7,7 +7,7 @@ from types import SimpleNamespace
 def test_schema_version_comes_from_extractor():
     from ai.feature_engineering import FEATURE_SCHEMA_VERSION
     from dataset_export import features
-    assert features.FEATURE_SCHEMA_VERSION == FEATURE_SCHEMA_VERSION == "spec065-features-v4"
+    assert features.FEATURE_SCHEMA_VERSION == FEATURE_SCHEMA_VERSION == "features-v4"
     assert "unavailable_features" in features.FEATURE_COLUMNS
 
 
@@ -29,7 +29,7 @@ def test_invalid_rows_keep_reasons(monkeypatch, export_source):
     from sqlalchemy import create_engine
     from sqlmodel import Session
     from tests.conftest import export_request
-    from tests.test_spec064_features import _params, _nodes
+    from tests.test_dataset_features import _params, _nodes
     from dataset_export import features as mod
     from ai.feature_engineering import FeatureExtractor
 

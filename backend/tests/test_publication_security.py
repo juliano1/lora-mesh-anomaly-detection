@@ -113,7 +113,7 @@ def test_login_rejects_password_larger_than_bcrypt_limit(client_and_session):
     ("post", "/api/send-message"),
 ])
 def test_removed_components_have_no_routes(client_and_session, method, path):
-    """Interface, LLM, Telegram, relatório AX/PDF e comparador não fazem parte da versão pública."""
+    """Interface, LLM, Telegram, relatório AX/PDF e comparador não fazem parte deste repositório."""
     client, _ = client_and_session
     headers = {"Authorization": f"Bearer {_token('active')}"}
     response = getattr(client, method)(path, headers=headers)
@@ -184,6 +184,45 @@ def test_successful_login_clears_failures(login_client):
     assert _login(login_client, "op", "senha-sintetica").status_code == 200
     for _ in range(2):
         assert _login(login_client, "op", "errada").status_code == 401
+
+
+def test_login_expires_abandoned_users_and_clients(login_client, monkeypatch):
+    from routers import auth
+    from types import SimpleNamespace
+    monkeypatch.setattr(auth, "time", SimpleNamespace(monotonic=lambda: 100_000.))
+    auth._failures[("old-client", "old-user")] = [0.]
+    auth._client_attempts["old-client"] = [0.]
+    assert _login(login_client, "op", "senha-sintetica").status_code == 200
+    assert ("old-client", "old-user") not in auth._failures
+    assert "old-client" not in auth._client_attempts
+
+
+def test_varying_usernames_are_limited_before_bcrypt(login_client, monkeypatch):
+    from routers import auth
+    monkeypatch.setattr(auth, "MAX_ATTEMPTS_PER_CLIENT", 3)
+    assert [_login(login_client, f"unknown-{i}", "x").status_code for i in range(3)] == [401] * 3
+
+    def unexpected_hash(*args):
+        pytest.fail("bcrypt não deve executar quando o cliente já está limitado")
+
+    monkeypatch.setattr(auth.bcrypt, "checkpw", unexpected_hash)
+    response = _login(login_client, "another-name", "x")
+    assert response.status_code == 429
+    assert int(response.headers["Retry-After"]) >= 1
+    assert len(auth._failures) == 3
+
+
+@pytest.mark.parametrize("table,limit", [("_failures", "MAX_TRACKED_FAILURES"),
+                                       ("_client_attempts", "MAX_TRACKED_CLIENTS")])
+def test_login_state_capacity_preserves_active_entries(login_client, monkeypatch, table, limit):
+    from routers import auth
+    now = auth.time.monotonic()
+    monkeypatch.setattr(auth, limit, 1)
+    state = getattr(auth, table)
+    key = ("another-client", "existing-user") if table == "_failures" else "another-client"
+    state[key] = [now]
+    assert _login(login_client, "new-user", "x").status_code == 429
+    assert state == {key: [now]}
 
 
 @pytest.mark.parametrize("method,path,body", [

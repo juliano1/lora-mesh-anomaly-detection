@@ -64,9 +64,12 @@ inclusive as normais e as indisponíveis.
 
 ## API
 
-A documentação interativa fica em `/docs`. Exceto `/`, `/health` e o login, todas as
-rotas exigem `Authorization: Bearer <token>`. As marcadas com **admin** exigem conta de
-administrador.
+A documentação interativa fica em `/docs`. `/`, `/health`, `/api/auth/login`, `/docs`,
+`/redoc` e `/openapi.json` são públicos. As demais rotas exigem
+`Authorization: Bearer <token>`. As marcadas com **admin** exigem conta de administrador.
+O login limita falhas por cliente e usuário, aplica também um limite de 30 tentativas
+por cliente a cada 60 segundos e expira o estado em memória. Ao atingir a capacidade
+de acompanhamento do processo, novas chaves recebem 429 até haver espaço.
 
 | Rota | Uso |
 |---|---|
@@ -113,6 +116,14 @@ São descartadas, com registro no log, as mensagens:
 - com valores fora das faixas aceitas;
 - de endereço não cadastrado na rede do tópico.
 
+Resultados de envio só atualizam comandos unicast cujo nó e endereço de destino
+coincidem com o registro e pertencem à rede ativa do tópico. Registros legados sem
+destino inequívoco não são atualizados por confirmação do gateway.
+
+Se a publicação MQTT da parada de uma simulação falhar, a API responde 503 e mantém
+o estado anterior para permitir nova tentativa. Publicação aceita não comprova que
+o firmware já aplicou o comando.
+
 O formato do beacon está em [`firmware/README.md`](../firmware/README.md).
 
 ## Estrutura
@@ -136,5 +147,5 @@ backend/
 ## Testes
 
 Rode `python -m pytest` a partir da raiz do repositório. Os testes de PostgreSQL só
-rodam quando `SPEC064_PG_URL` aponta para um banco descartável; eles criam e apagam
+rodam quando `TEST_POSTGRES_URL` aponta para um banco descartável; eles criam e apagam
 um schema próprio.

@@ -11,10 +11,10 @@ from sqlmodel import SQLModel
 
 from tests.conftest import export_request
 
-BASE_URL = os.environ.get("SPEC064_PG_URL")
-pytestmark = pytest.mark.skipif(not BASE_URL, reason="defina SPEC064_PG_URL (PostgreSQL de teste)")
+BASE_URL = os.environ.get("TEST_POSTGRES_URL")
+pytestmark = pytest.mark.skipif(not BASE_URL, reason="defina TEST_POSTGRES_URL (PostgreSQL de teste)")
 # Schema próprio e descartável: os testes nunca tocam no schema padrão do banco apontado.
-SCHEMA = f"spec064_teste_{uuid.uuid4().hex[:12]}"
+SCHEMA = f"dataset_test_{uuid.uuid4().hex[:12]}"
 PG_URL = (make_url(BASE_URL).update_query_dict({"options": f"-csearch_path={SCHEMA}"})
           .render_as_string(hide_password=False) if BASE_URL else None)
 SETTINGS = SimpleNamespace(DATA_ORIGIN_TRACKED_SINCE=None, ML_REFERENCE_MARGIN_MINUTES=0.0,

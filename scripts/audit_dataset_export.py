@@ -96,7 +96,7 @@ INTEGER_TEXT = re.compile(r"-?(0|[1-9][0-9]*)")
 KIND_LABELS = {"raw": "Bruto", "features": "Features por janela", "full": "Completo"}
 CASE_NAMES = ("real", "unknown", "mixed", "synthetic", "reverse_synthetic", "reverse_simulation",
               "margin_only", "legacy")
-SPEC_CASES_TEXT = (
+ORIGIN_CASES_TEXT = (
     "Janelas por caso de origem/simulação (0 = recorte não contém o caso). reverse_synthetic: linhas "
     "sintéticas sem simulação do próprio nó; reverse_simulation: simulação só de nó fonte (enlace "
     "reverso), sem linha sintética; margin_only: sem linha sintética, excluída por simulation_overlap "
@@ -577,8 +577,10 @@ def _features_layout(a, rows, req, grid, requested) -> list:
             bad_window.append((r["node_id"], r["window_start_utc"], r["window_end_utc"], r["available_at_utc"]))
     a.add("features:window", "window_start = iso_z(fim − janela), available_at = window_end (texto exato, com Z)",
           [], bad_window[:20])
+    from artifact_versions import version_matches
     a.add("features:schema_version", "feature_schema_version esperado", [FEATURE_SCHEMA_VERSION],
-          sorted({str(r["feature_schema_version"]) for r in rows}))
+          sorted({str(r["feature_schema_version"]) for r in rows}),
+          ok=all(version_matches(r["feature_schema_version"], FEATURE_SCHEMA_VERSION) for r in rows))
     a.add("features:extractor_revision", "extractor_revision = código atual", [extractor_revision()],
           sorted({str(r["extractor_revision"]) for r in rows}))
     a.add("features:extraction_policy", "extraction_policy = all_origins_v1", [EXTRACTION_POLICY],
@@ -718,7 +720,7 @@ def _classify_cases(a, rows, windows, policy, policy_no_margin, expected):
            {"windows": len(reverse_only),
             "examples": [(r["node_id"], r["window_end_utc"], r["reference_exclusion_reason"])
                          for r in reverse_only[:5]]})
-    a.info("origin:spec_cases", SPEC_CASES_TEXT, {k: {"windows": len(v), "examples": v[:3]} for k, v in cases.items()})
+    a.info("origin:case_examples", ORIGIN_CASES_TEXT, {k: {"windows": len(v), "examples": v[:3]} for k, v in cases.items()})
     defaults = Counter(d for r in rows for d in (_loads(r["defaulted_features"]) or []))
     unavailable = Counter(k for r in rows for k in (_loads(r["unavailable_features"]) or {}))
     a.info("features:defaults", "features preenchidas por default (contagem de janelas)", dict(defaults))
@@ -989,7 +991,7 @@ def audit_import(a, package: Path, kind: str):
     if kind not in ("raw", "full"):
         a.info("import:foreign_key_check", "não se aplica: pacote sem dados brutos", None)
         return
-    with tempfile.TemporaryDirectory(prefix="spec068_import_") as tmp:
+    with tempfile.TemporaryDirectory(prefix="dataset_audit_import_") as tmp:
         target = Path(tmp) / "importado.db"
         started = time.monotonic()
         proc = subprocess.run([sys.executable, str(ROOT / "scripts" / "import_dataset.py"),

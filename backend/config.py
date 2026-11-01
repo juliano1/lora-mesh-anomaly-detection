@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     API_HOST: str = "127.0.0.1"
     API_PORT: int = 8000
 
-    # Origens de navegador permitidas (vazio = nenhuma; a versão pública não tem interface).
+    # Origens de navegador permitidas (vazio = nenhuma; este repositório não inclui interface web).
     CORS_ORIGINS: str = ""
 
     # Configurações de Health Check

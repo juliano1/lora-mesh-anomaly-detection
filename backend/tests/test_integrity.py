@@ -101,7 +101,7 @@ def test_omitted_required_file_is_rejected_even_if_manifest_omits_it(export_sour
 
 
 def test_cli_does_not_ignore_zero_step(export_source, tmp_path, capsys):
-    from tests.test_spec064_cli import _load
+    from tests.test_cli import _load
     export = _load('export_dataset')
     result = export.main(['--sqlite', str(export_source), '--source-id', 'lab',
         '--network-id', '1', '--start', '2026-09-01T00:00:00Z',

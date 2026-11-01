@@ -17,7 +17,7 @@ def _ev(**over):
 def test_neutral_all_miss():
     ev = _ev()
     assert all(ev.criteria[c].state == "miss" for c in ev.criteria)
-    assert ev.rules_version == "spec065-rules-v1"
+    assert ev.rules_version == "rules-v1"
 
 
 def test_a2_uses_only_sequence_loss():

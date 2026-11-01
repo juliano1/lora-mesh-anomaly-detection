@@ -30,14 +30,14 @@ def engine():
 
 
 def test_add_user_is_admin_creates_column(engine):
-    from migrations.spec056_add_user_is_admin import upgrade
+    from migrations.add_user_is_admin import upgrade
     upgrade(engine)
     with engine.connect() as conn:
         assert "is_admin" in _cols(conn, "user")
 
 
 def test_add_user_is_admin_bootstraps_admin_user(engine):
-    from migrations.spec056_add_user_is_admin import upgrade
+    from migrations.add_user_is_admin import upgrade
     upgrade(engine)
     with engine.connect() as conn:
         row = conn.execute(
@@ -47,7 +47,7 @@ def test_add_user_is_admin_bootstraps_admin_user(engine):
 
 
 def test_add_user_is_admin_preserves_later_demotion(engine):
-    from migrations.spec056_add_user_is_admin import upgrade
+    from migrations.add_user_is_admin import upgrade
     upgrade(engine)
     with engine.connect() as conn:
         conn.execute(text("UPDATE user SET is_admin = 0 WHERE username='admin100'"))
@@ -61,7 +61,7 @@ def test_add_user_is_admin_preserves_later_demotion(engine):
 
 
 def test_add_user_is_admin_is_idempotent(engine):
-    from migrations.spec056_add_user_is_admin import upgrade
+    from migrations.add_user_is_admin import upgrade
     upgrade(engine)
     upgrade(engine)  # segunda execução não pode lançar
     with engine.connect() as conn:
@@ -87,7 +87,7 @@ def mlsettings_engine():
 
 
 def test_add_mlsettings_llm_fields(mlsettings_engine):
-    from migrations.spec056_add_mlsettings_llm_fields import upgrade
+    from migrations.add_mlsettings_llm_fields import upgrade
     upgrade(mlsettings_engine)
     with mlsettings_engine.connect() as conn:
         cols = _cols(conn, "mlsettings")
@@ -97,7 +97,7 @@ def test_add_mlsettings_llm_fields(mlsettings_engine):
 
 
 def test_add_mlsettings_llm_fields_idempotent(mlsettings_engine):
-    from migrations.spec056_add_mlsettings_llm_fields import upgrade
+    from migrations.add_mlsettings_llm_fields import upgrade
     upgrade(mlsettings_engine)
     upgrade(mlsettings_engine)
     with mlsettings_engine.connect() as conn:
@@ -145,7 +145,7 @@ EXPECTED_NEW_LLM_ANALYSIS_COLS = [
 
 
 def test_add_llm_analysis_fields(llm_analysis_engine):
-    from migrations.spec056_add_llm_analysis_fields import upgrade
+    from migrations.add_llm_analysis_fields import upgrade
     upgrade(llm_analysis_engine)
     with llm_analysis_engine.connect() as conn:
         cols = _cols(conn, "llm_analysis")
@@ -154,7 +154,7 @@ def test_add_llm_analysis_fields(llm_analysis_engine):
 
 
 def test_add_llm_analysis_fields_idempotent(llm_analysis_engine):
-    from migrations.spec056_add_llm_analysis_fields import upgrade
+    from migrations.add_llm_analysis_fields import upgrade
     upgrade(llm_analysis_engine)
     upgrade(llm_analysis_engine)
     with llm_analysis_engine.connect() as conn:
@@ -162,8 +162,8 @@ def test_add_llm_analysis_fields_idempotent(llm_analysis_engine):
 
 
 def test_llm_analysis_nullable_allows_pending_rows(llm_analysis_engine):
-    from migrations.spec056_add_llm_analysis_fields import upgrade as add_fields
-    from migrations.spec056_llm_analysis_nullable import upgrade as make_nullable
+    from migrations.add_llm_analysis_fields import upgrade as add_fields
+    from migrations.llm_analysis_nullable import upgrade as make_nullable
     add_fields(llm_analysis_engine)
     make_nullable(llm_analysis_engine)
     with llm_analysis_engine.connect() as conn:
@@ -181,8 +181,8 @@ def test_llm_analysis_nullable_allows_pending_rows(llm_analysis_engine):
 
 
 def test_llm_analysis_nullable_preserves_existing_rows(llm_analysis_engine):
-    from migrations.spec056_add_llm_analysis_fields import upgrade as add_fields
-    from migrations.spec056_llm_analysis_nullable import upgrade as make_nullable
+    from migrations.add_llm_analysis_fields import upgrade as add_fields
+    from migrations.llm_analysis_nullable import upgrade as make_nullable
     with llm_analysis_engine.connect() as conn:
         conn.execute(text(
             "INSERT INTO llm_analysis "
@@ -202,8 +202,8 @@ def test_llm_analysis_nullable_preserves_existing_rows(llm_analysis_engine):
 
 
 def test_llm_analysis_nullable_idempotent(llm_analysis_engine):
-    from migrations.spec056_add_llm_analysis_fields import upgrade as add_fields
-    from migrations.spec056_llm_analysis_nullable import upgrade as make_nullable
+    from migrations.add_llm_analysis_fields import upgrade as add_fields
+    from migrations.llm_analysis_nullable import upgrade as make_nullable
     add_fields(llm_analysis_engine)
     make_nullable(llm_analysis_engine)
     make_nullable(llm_analysis_engine)  # não pode quebrar nem duplicar
@@ -214,8 +214,8 @@ def test_llm_analysis_nullable_idempotent(llm_analysis_engine):
 def test_llm_analysis_nullable_with_existing_index_and_fk(llm_analysis_engine):
     """Banco real tem índice ix_llm_analysis_* e llm_human_review apontando para a tabela:
     a recriação não pode falhar por índice duplicado nem deixar a FK numa tabela apagada."""
-    from migrations.spec056_add_llm_analysis_fields import upgrade as add_fields
-    from migrations.spec056_llm_analysis_nullable import upgrade as make_nullable
+    from migrations.add_llm_analysis_fields import upgrade as add_fields
+    from migrations.llm_analysis_nullable import upgrade as make_nullable
     with llm_analysis_engine.connect() as conn:
         conn.execute(text("CREATE INDEX ix_llm_analysis_anomaly_id ON llm_analysis(anomaly_id)"))
         conn.execute(text(
@@ -234,29 +234,30 @@ def test_llm_analysis_nullable_with_existing_index_and_fk(llm_analysis_engine):
             "SELECT sql FROM sqlite_master WHERE name='llm_human_review'")).scalar()
         notnull = {r[1]: r[3] for r in conn.execute(text("PRAGMA table_info(llm_analysis)"))}
         verdict = conn.execute(text("SELECT verdict FROM llm_analysis WHERE id=1")).scalar()
-    assert "llm_analysis_old_spec056" not in tables
+    assert "llm_analysis_backup" not in tables
     assert verdict == "REAL"
     assert notnull["verdict"] == 0
-    assert "llm_analysis_old_spec056" not in review_sql
+    assert "llm_analysis_backup" not in review_sql
 
 
-def test_llm_analysis_nullable_resumes_after_interrupted_rename(llm_analysis_engine):
+@pytest.mark.parametrize("backup_name", ["llm_analysis_backup", "llm_analysis_old_legacy056"])
+def test_llm_analysis_nullable_resumes_after_interrupted_rename(llm_analysis_engine, backup_name):
     """Se a execução anterior parou depois do RENAME, a seguinte recria e copia os dados."""
-    from migrations.spec056_add_llm_analysis_fields import upgrade as add_fields
-    from migrations.spec056_llm_analysis_nullable import upgrade as make_nullable
+    from migrations.add_llm_analysis_fields import upgrade as add_fields
+    from migrations.llm_analysis_nullable import upgrade as make_nullable
     add_fields(llm_analysis_engine)
     with llm_analysis_engine.connect() as conn:
         conn.execute(text(
             "INSERT INTO llm_analysis (id, anomaly_id, node_id, anomaly_type, verdict, confidence_llm,"
             " confidence_ml, severity_llm, reasoning, model_used)"
             " VALUES (7, 1, 1, 'A1', 'REAL', 0.5, 0.5, 'low', 'x', 'm')"))
-        conn.execute(text("ALTER TABLE llm_analysis RENAME TO llm_analysis_old_spec056"))
+        conn.execute(text(f"ALTER TABLE llm_analysis RENAME TO {backup_name}"))
         conn.commit()
     make_nullable(llm_analysis_engine)
     with llm_analysis_engine.connect() as conn:
         tables = {r[0] for r in conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))}
         assert conn.execute(text("SELECT verdict FROM llm_analysis WHERE id=7")).scalar() == "REAL"
-    assert "llm_analysis_old_spec056" not in tables
+    assert backup_name not in tables
 
 
 def test_new_tables_created_from_models():
@@ -312,7 +313,7 @@ def _full_engine_with_legacy_rows():
 
 def test_backfill_network_id():
     eng = _full_engine_with_legacy_rows()
-    from migrations.spec056_backfill_legacy import upgrade
+    from migrations.backfill_legacy import upgrade
     upgrade(eng)
     with eng.connect() as conn:
         rows = conn.execute(text(
@@ -323,7 +324,7 @@ def test_backfill_network_id():
 
 def test_backfill_telegram_status():
     eng = _full_engine_with_legacy_rows()
-    from migrations.spec056_backfill_legacy import upgrade
+    from migrations.backfill_legacy import upgrade
     upgrade(eng)
     with eng.connect() as conn:
         s1 = conn.execute(text("SELECT telegram_status FROM llm_analysis WHERE id=1")).fetchone()[0]
@@ -334,7 +335,7 @@ def test_backfill_telegram_status():
 
 def test_backfill_legacy_human_review():
     eng = _full_engine_with_legacy_rows()
-    from migrations.spec056_backfill_legacy import upgrade
+    from migrations.backfill_legacy import upgrade
     upgrade(eng)
     with eng.connect() as conn:
         rows = conn.execute(text(
@@ -350,7 +351,7 @@ def test_backfill_legacy_human_review():
 
 def test_backfill_idempotent():
     eng = _full_engine_with_legacy_rows()
-    from migrations.spec056_backfill_legacy import upgrade
+    from migrations.backfill_legacy import upgrade
     upgrade(eng)
     upgrade(eng)  # segunda execução não pode duplicar reviews
     with eng.connect() as conn:

@@ -1216,11 +1216,14 @@ def process_send_result(payload_str: str, network_id: Optional[int] = None):
 
         msg_id = data.get("msg_id")
         status = data.get("status", "sent")
+        destination = data.get("dest")
         rtt_ms = data.get("rtt_ms")
         error = data.get("error")
-        if (not isinstance(msg_id, int) or isinstance(msg_id, bool)
-                or status not in _SEND_RESULT_STATUSES
-                or (rtt_ms is not None and (not isinstance(rtt_ms, int) or not 0 <= rtt_ms <= 600_000))
+        if (not isinstance(msg_id, int) or isinstance(msg_id, bool) or msg_id <= 0
+                or not isinstance(status, str) or status not in _SEND_RESULT_STATUSES
+                or not isinstance(destination, str) or not re.fullmatch(_LORA_ADDR, destination)
+                or (rtt_ms is not None and (isinstance(rtt_ms, bool)
+                    or not isinstance(rtt_ms, int) or not 0 <= rtt_ms <= 600_000))
                 or (error is not None and not isinstance(error, str))):
             logger.warning("send_result recusado: campos fora do formato esperado")
             return
@@ -1233,6 +1236,21 @@ def process_send_result(payload_str: str, network_id: Optional[int] = None):
             with Session(engine) as session:
                 message = session.get(MessageLog, msg_id)
                 if message:
+                    # Registros sem destino inequívoco (incluindo broadcasts legados)
+                    # não podem ser autorizados só pelo ID informado pelo gateway.
+                    from models import Network
+                    network = session.get(Network, network_id) if network_id is not None else None
+                    node = session.get(Node, message.target_node_id) if message.target_node_id is not None else None
+                    expected_address = message.target_lora_address
+                    if (not network or not network.active or not node
+                            or node.network_id != network_id or message.message_type != "unicast"
+                            or not expected_address or not node.lora_address
+                            or not re.fullmatch(_LORA_ADDR, expected_address)
+                            or not re.fullmatch(_LORA_ADDR, node.lora_address)
+                            or int(destination, 16) != int(expected_address, 16)
+                            or int(destination, 16) != int(node.lora_address, 16)):
+                        logger.warning("send_result recusado: rede ou destino sem correlação com o comando")
+                        return
                     message.status = status
                     message.updated_at = datetime.utcnow()
                     if rtt_ms is not None:

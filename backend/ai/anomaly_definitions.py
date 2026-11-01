@@ -13,11 +13,11 @@ from enum import Enum
 from numbers import Real
 from types import MappingProxyType
 
-RULES_VERSION = "spec065-rules-v1"
-DEFINITIONS_VERSION = "spec066-definitions-v3"  # v3: A6 é do enlace (radio), sem nó de origem
+RULES_VERSION = "rules-v1"
+DEFINITIONS_VERSION = "definitions-v3"  # v3: A6 é do enlace (radio), sem nó de origem
 # Marca do formato dos metadados de janela gravados em online_inference.features_json
-# (chaves "_*"). Valor preservado para comparar registros antigos.
-REGISTRO_VERSION = "spec069-registro-v1"
+# (chaves "_*"). O número da versão descreve o formato, sem mudar os dados antigos.
+REGISTRO_VERSION = "registro-v1"
 CLASSIFICATION_ORDER = ("A5", "A1", "A2", "A3", "A4", "A6", "A7")
 # Contrato explícito do vetor dos modelos, independente da ordem dos metadados.
 FEATURE_ORDER = (

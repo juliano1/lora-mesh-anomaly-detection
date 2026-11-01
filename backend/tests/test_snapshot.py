@@ -59,24 +59,24 @@ def test_describe_sqlite_source(tmp_path):
     eng.dispose()
 
 
-PG_URL = os.environ.get("SPEC064_PG_URL")
+PG_URL = os.environ.get("TEST_POSTGRES_URL")
 
 
-@pytest.mark.skipif(not PG_URL, reason="defina SPEC064_PG_URL para verificar no PostgreSQL")
+@pytest.mark.skipif(not PG_URL, reason="defina TEST_POSTGRES_URL para verificar no PostgreSQL")
 def test_postgres_snapshot_is_stable_against_concurrent_write():
     from dataset_export.snapshot import build_source_engine, snapshot_session
     admin = create_engine(PG_URL)
     with admin.begin() as c:
-        c.execute(text("DROP TABLE IF EXISTS spec064_t"))
-        c.execute(text("CREATE TABLE spec064_t (id SERIAL PRIMARY KEY)"))
-        c.execute(text("INSERT INTO spec064_t DEFAULT VALUES"))
+        c.execute(text("DROP TABLE IF EXISTS snapshot_test"))
+        c.execute(text("CREATE TABLE snapshot_test (id SERIAL PRIMARY KEY)"))
+        c.execute(text("INSERT INTO snapshot_test DEFAULT VALUES"))
     source = build_source_engine(PG_URL)
     with snapshot_session(source) as s:
-        first = s.execute(text("SELECT COUNT(*) FROM spec064_t")).scalar()
+        first = s.execute(text("SELECT COUNT(*) FROM snapshot_test")).scalar()
         with admin.begin() as c:
-            c.execute(text("INSERT INTO spec064_t DEFAULT VALUES"))
-        second = s.execute(text("SELECT COUNT(*) FROM spec064_t")).scalar()
+            c.execute(text("INSERT INTO snapshot_test DEFAULT VALUES"))
+        second = s.execute(text("SELECT COUNT(*) FROM snapshot_test")).scalar()
     assert first == second == 1
     with admin.begin() as c:
-        c.execute(text("DROP TABLE spec064_t"))
+        c.execute(text("DROP TABLE snapshot_test"))
     source.dispose(); admin.dispose()

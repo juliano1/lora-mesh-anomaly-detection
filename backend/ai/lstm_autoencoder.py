@@ -46,6 +46,8 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 
+from artifact_versions import version_matches
+
 from ai.numeric_guards import safe_feature_scale
 
 logger = logging.getLogger(__name__)
@@ -581,7 +583,7 @@ class LSTMAutoencoderModel:
 
         meta = json.loads(meta_path.read_text())
         schema_version, feature_names = _feature_identity()
-        if (meta.get("feature_schema_version") != schema_version
+        if (not version_matches(meta.get("feature_schema_version"), schema_version)
                 or meta.get("feature_names") != feature_names):
             raise IncompatibleFeatureSchema(
                 f"lstm_ae_v{version}: feature_schema_version="

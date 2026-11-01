@@ -517,7 +517,7 @@ class MLSettings(SQLModel, table=True):
         default=None, description="mean|last|max; mudar exige recalibração",
     )
     ml_lstm_threshold_percentile: Optional[float] = Field(
-        default=None, description="percentil do limiar LSTM (validação)",
+        default=None, description="percentil do limiar LSTM no bloco de calibração",
     )
 
     # Seleção online de algoritmos
@@ -723,8 +723,8 @@ class OnlineInference(SQLModel, table=True):
     combination_reason: Optional[str] = Field(default=None)
     combination_is_anomaly: Optional[bool] = Field(default=None)
     combination_score: Optional[float] = Field(default=None)
-    primary_rank: Optional[float] = Field(default=None, description="posto do primário na validação (escala da fusão)")
-    secondary_rank: Optional[float] = Field(default=None, description="posto do secundário na validação")
+    primary_rank: Optional[float] = Field(default=None, description="posto do primário em relação aos scores de treino (escala da fusão)")
+    secondary_rank: Optional[float] = Field(default=None, description="posto do secundário em relação aos scores de treino")
     fusion_score: Optional[float] = Field(default=None,
         description="α·posto_primário+(1−α)·posto_secundário sempre que ambos válidos (contrafactual fora da fusão)")
     fusion_decision: Optional[bool] = Field(default=None, description="fusion_score > τ com τ válido")

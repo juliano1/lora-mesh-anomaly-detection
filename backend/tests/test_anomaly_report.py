@@ -1,4 +1,4 @@
-"""Testes do contrato de dados dos endpoints de anomalia — spec AnomalyReportModal."""
+"""Testes do contrato de dados dos endpoints públicos de anomalias."""
 import pytest
 from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel

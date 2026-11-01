@@ -2,7 +2,7 @@
 Legado (tabela sem uso nesta versão): colunas de auditoria, snapshot e fila em
 llm_analysis (aditivas).
 A conversão NOT NULL->nullable dos campos de resultado é feita em
-spec056_llm_analysis_nullable.py (deve rodar DEPOIS desta).
+llm_analysis_nullable.py (deve rodar DEPOIS desta).
 Idempotente.
 """
 from sqlalchemy import text

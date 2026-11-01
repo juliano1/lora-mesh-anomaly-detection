@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Triagem de arquivos para publicação. Não substitui revisão manual ou secret scanner.
+"""Triagem de segredos, dados pessoais e arquivos proibidos. Não substitui revisão manual ou secret scanner.
 
 Mostra apenas caminho, linha e regra; nunca imprime o conteúdo suspeito.
 Por padrão, lê arquivos versionados e novos não ignorados da árvore atual.
+Na árvore atual, também recusa referências numeradas a documentos internos.
 --history também examina blobs textuais de até 5 MB alcançáveis por referências locais.
 """
 from __future__ import annotations
@@ -17,6 +18,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+INTERNAL_REFERENCE = re.compile(r"(?<![A-Za-z])spec[-_ ]?[0-9]{2,3}", re.IGNORECASE)
 PATTERNS = {
     "private_key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"),
     "credential_pattern": re.compile(
@@ -93,6 +95,8 @@ def current_tree(inventory_path=None):
         if not path.is_file():
             rows.append({"arquivo": name, "estado": "removido da árvore de trabalho"})
             continue
+        if INTERNAL_REFERENCE.search(name):
+            findings.append({"path": name, "line": 0, "rule": "internal_design_reference"})
         data = path.read_bytes()
         row = {"arquivo": name, "estado": "triagem automática; revisão manual pendente",
                "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
@@ -107,6 +111,9 @@ def current_tree(inventory_path=None):
         else:
             row["linhas"] = len(text.splitlines())
             findings.extend(scan_text(name, text))
+            for match in INTERNAL_REFERENCE.finditer(text):
+                findings.append({"path": name, "line": text.count("\n", 0, match.start()) + 1,
+                                 "rule": "internal_design_reference"})
             if path.suffix == ".py":
                 try:
                     ast.parse(text, filename=name)

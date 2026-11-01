@@ -1,4 +1,4 @@
-# backend/tests/test_spec55_mqtt.py
+# backend/tests/test_mqtt.py
 """Testes do MQTT handler: origem dos dados e fecho das simulações."""
 import pytest
 from datetime import datetime, timedelta

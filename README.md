@@ -260,12 +260,18 @@ python scripts/check_publication.py
 pio run --project-dir firmware -e heltec_v2 -e heltec_v2_gateway   # requer credentials.h (use o exemplo)
 ```
 
-Antes de publicar, `python scripts/check_publication.py --history` examina também os blobs
-do histórico Git. A triagem não substitui a revisão manual nem um secret scanner.
+`check_publication.py` procura segredos, dados pessoais e arquivos que não devem ser
+versionados; com `--history`, examina também os blobs do histórico Git. A triagem não
+substitui a revisão manual nem um secret scanner.
 
-Os testes de PostgreSQL rodam quando `SPEC064_PG_URL` aponta para um banco descartável.
+Os testes de PostgreSQL rodam quando `TEST_POSTGRES_URL` aponta para um banco descartável.
 Alguns testes do auditor de exportação exigem um repositório Git com commits e são
 pulados, com o motivo indicado, quando não há `HEAD`.
+
+Os identificadores públicos de artefatos usam nomes descritivos, como `dataset-v1`
+e `features-v4`. Os leitores aceitam identificadores antigos com prefixo numerado
+quando o formato e a versão coincidem. Modelos com outra versão ou ordem de features
+continuam sendo recusados; os dados de bancos existentes não são reescritos.
 
 ## Limitações
 

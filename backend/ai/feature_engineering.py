@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 # Identidade da definição das 11 entradas (v2 = desvios por enlace).
 # v3: inversão de chegada não abre época na perda.
 # v4: bateria a partir da última leitura anterior à janela (envio condicional do firmware).
-FEATURE_SCHEMA_VERSION = "spec065-features-v4"
+FEATURE_SCHEMA_VERSION = "features-v4"
 
 # O firmware envia a bateria quando ela muda 2 p.p. ou a cada 5 min (BATTERY_SEND_INTERVAL).
 # A última leitura vale por até 60 min, o contexto de uma decisão do LSTM-AE (12 × 5 min):

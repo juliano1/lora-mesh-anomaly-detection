@@ -1,4 +1,4 @@
-# backend/tests/test_spec55_detector.py
+# backend/tests/test_detector.py
 """Testes de sim_run_id e detected_at no anomaly_detector."""
 import pytest
 from datetime import datetime, timedelta

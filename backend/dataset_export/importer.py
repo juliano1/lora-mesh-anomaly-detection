@@ -7,8 +7,8 @@ quem altera um arquivo pode regravar o manifesto); reconstrói as tabelas com o 
 escritor da materialização (`write_rows`); confere `PRAGMA foreign_key_check`;
 grava ao lado do banco `<nome>.dataset.json` com o manifesto de origem e os
 parâmetros de interpretação, que recálculos posteriores devem reaplicar
-(`resolve_for_computation`). O SQLite resultante também serve de snapshot para o
-executor de replay.
+(`resolve_for_computation`). O SQLite resultante pode ser usado como snapshot
+para novos recálculos e exportações.
 """
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ import json
 import os
 import tempfile
 import zipfile
+from artifact_versions import version_matches
 from datetime import datetime
 from pathlib import Path
 
@@ -28,7 +29,7 @@ from dataset_export.provenance import code_revision
 from dataset_export.request import iso_z
 from dataset_export.slice import create_target, finalize_sqlite, table, write_rows
 
-IMPORT_FORMAT = "spec064-import-v1"
+IMPORT_FORMAT = "import-v1"
 
 
 def sidecar_path(db_path) -> Path:
@@ -61,7 +62,7 @@ def import_dataset(package, out_db) -> dict:
     with zipfile.ZipFile(package) as zf:
         incoming_schema = json.loads(zf.read(f"{root}/schema.json"))
     current_schema = build_schema()
-    if incoming_schema.get("format") != current_schema["format"]:
+    if not version_matches(incoming_schema.get("format"), current_schema["format"]):
         raise PackageError("schema de formato desconhecido")
     for name in RAW_FILES:
         old = incoming_schema.get("files", {}).get(name, {}).get("columns", [])
@@ -71,7 +72,7 @@ def import_dataset(package, out_db) -> dict:
             raise PackageError(f"{name}: schema incompatível com o código instalado")
     out_db.parent.mkdir(parents=True, exist_ok=True)
     own_sidecar = False
-    with tempfile.TemporaryDirectory(prefix="spec064_import_", dir=out_db.parent) as directory:
+    with tempfile.TemporaryDirectory(prefix="dataset_import_", dir=out_db.parent) as directory:
         staged_db = Path(directory) / "dataset.db"
         engine = create_target(staged_db)
         try:

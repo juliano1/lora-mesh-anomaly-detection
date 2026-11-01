@@ -138,6 +138,57 @@ def test_send_result_with_unexpected_fields_is_ignored(ingest, payload):
         assert s.get(models.MessageLog, 1).status == "pending"
 
 
+@pytest.mark.parametrize("topic_network,destination,expected", [
+    (1, "0x0002", "sent"),
+    (1, "0002", "sent"),
+    (2, "0x0002", "pending"),
+    (None, "0x0002", "pending"),
+    (1, "0x0005", "pending"),
+    (1, None, "pending"),
+    (1, "BROADCAST", "pending"),
+])
+def test_send_result_requires_registered_destination_in_topic_network(
+        ingest, topic_network, destination, expected):
+    svc, engine, models = ingest
+    with Session(engine) as s:
+        s.add(models.MessageLog(id=42, target_node_id=2, target_lora_address="0x0002",
+                               command="SIM_STOP", status="pending"))
+        s.commit()
+    svc.process_send_result(json.dumps({"type": "send_result", "msg_id": 42,
+                                       "dest": destination, "status": "sent"}), topic_network)
+    with Session(engine) as s:
+        assert s.get(models.MessageLog, 42).status == expected
+
+
+@pytest.mark.parametrize("change", ["inactive_network", "missing_node", "missing_address",
+                                   "moved_address", "broadcast"])
+def test_ambiguous_or_inactive_send_results_do_not_change_history(ingest, change):
+    svc, engine, models = ingest
+    with Session(engine) as s:
+        message = models.MessageLog(id=42, target_node_id=2, target_lora_address="0x0002",
+                                    command="SIM_STOP", status="pending")
+        if change == "inactive_network":
+            network = s.get(models.Network, 1)
+            network.active = False
+            s.add(network)
+        elif change == "missing_node":
+            message.target_node_id = None
+        elif change == "missing_address":
+            message.target_lora_address = None
+        elif change == "moved_address":
+            node = s.get(models.Node, 2)
+            node.lora_address = "0x0003"
+            s.add(node)
+        elif change == "broadcast":
+            message.message_type = "broadcast"
+        s.add(message)
+        s.commit()
+    svc.process_send_result(json.dumps({"type": "send_result", "msg_id": 42,
+                                       "dest": "0x0002", "status": "sent"}), 1)
+    with Session(engine) as s:
+        assert s.get(models.MessageLog, 42).status == "pending"
+
+
 def test_downlink_goes_to_the_node_network(monkeypatch):
     """Comando para nó da rede 2 sai em lora/mesh/2/command; sem rede, não sai."""
     import mqtt_service_sync as svc

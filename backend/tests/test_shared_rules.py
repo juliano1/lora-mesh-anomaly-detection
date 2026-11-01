@@ -119,8 +119,8 @@ def test_settings_api_exposes_generated_catalog(session, monkeypatch):
     monkeypatch.setattr(main, "_get_available_algorithms", lambda: [])
     result = main.get_ml_settings(session)
     assert result["classification"]["catalog"] == get_catalog_info()
-    assert result["classification"]["rules_version"] == "spec065-rules-v1"
-    assert result["classification"]["definitions_version"] == "spec066-definitions-v3"
+    assert result["classification"]["rules_version"] == "rules-v1"
+    assert result["classification"]["definitions_version"] == "definitions-v3"
     fingerprint = result["classification"]["definitions_fingerprint"]
     assert fingerprint == evaluate_criteria(NEUTRAL).to_evidence()["definitions_fingerprint"]
     assert fingerprint == definition_fingerprint()

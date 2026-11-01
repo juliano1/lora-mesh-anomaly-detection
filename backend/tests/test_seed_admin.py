@@ -37,7 +37,7 @@ def test_seed_preserves_existing_non_admin(mem_engine):
     eng, seed_users = mem_engine
     from models import User
 
-    # Simula o estado quebrado: usuários já existem mas com is_admin=False
+    # Uma conta existente pode ter perdido o privilégio por decisão do operador.
     with Session(eng) as s:
         s.add(User(username="admin100", password_hash="x", is_admin=False))
         s.add(User(username="admin200", password_hash="y", is_admin=False))

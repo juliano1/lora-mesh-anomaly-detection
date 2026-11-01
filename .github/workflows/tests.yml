@@ -33,7 +33,7 @@ jobs:
       - name: Lint (erros de sintaxe e nomes indefinidos)
         run: ruff check backend scripts firmware/apply_patch.py tests conftest.py importacao_arquivos_csv/codigos --select E9,F63,F7,F82
 
-      - name: Triagem de publicação
+      - name: Triagem de segredos e arquivos
         run: python scripts/check_publication.py
 
       - name: Testes

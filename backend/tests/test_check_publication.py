@@ -74,6 +74,15 @@ def test_findings_never_include_the_matched_value(scanner):
     assert all("segredo" not in str(value) for f in findings for value in f.values())
 
 
+def test_current_tree_rejects_internal_document_references(scanner, tmp_path, monkeypatch):
+    path = tmp_path / "README.md"
+    path.write_text("Documento " + "sp" + "ec-999\n", encoding="utf-8")
+    monkeypatch.setattr(scanner, "ROOT", tmp_path)
+    monkeypatch.setattr(scanner, "git", lambda *a: b"README.md\0")
+    _, findings = scanner.current_tree()
+    assert findings == [{"path": "README.md", "line": 1, "rule": "internal_design_reference"}]
+
+
 def test_inventory_keeps_rows_of_removed_files(scanner, tmp_path, monkeypatch):
     inventory = tmp_path / "arquivos.csv"
     with inventory.open("w", encoding="utf-8", newline="") as stream:

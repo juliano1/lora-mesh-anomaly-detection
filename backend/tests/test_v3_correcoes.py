@@ -12,8 +12,9 @@ NEUTRAL = dict(rssi_mean=-80., rssi_std=1., snr_mean=8., snr_std=1., pdr_mean=10
                beacon_interval_std=1., route_change_rate=0., link_asymmetry=1.)
 NOW = datetime(2026, 10, 19, 12)
 # Assinatura do contrato das definições v3 (A6 é "radio": descreve o enlace, sem nó de
-# origem). Mudanças só de apresentação não a alteram.
-FINGERPRINT_DEFINITIONS = "881c75588fe4134d41b9b59a1f52c31b794743c1a8425ee7ef111dca1e0272a1"  # pragma: allowlist secret
+# origem), com identificadores públicos descritivos. Mudanças só de apresentação
+# não a alteram; o hash inclui os identificadores de versão do contrato.
+FINGERPRINT_DEFINITIONS = "15c920e9a341c71347ae49f6042b421300c5106648d7200dc94a024572d698a0"  # pragma: allowlist secret
 
 
 @pytest.fixture

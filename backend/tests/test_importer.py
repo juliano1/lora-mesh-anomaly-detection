@@ -53,6 +53,38 @@ def test_sidecar_keeps_manifest_interpretation(imported):
     assert info["interpretation"] == manifest["interpretation"]
 
 
+@pytest.mark.parametrize("version,accepted", [("dataset-v1", True), ("dataset-v2", False)])
+def test_old_package_prefix_preserves_only_compatible_format(imported, tmp_path, version, accepted):
+    import hashlib
+    import zipfile
+    from dataset_export.importer import import_dataset
+    from dataset_export.package import PackageError
+    db, _, manifest = imported
+    root = manifest["package_root"]
+    with zipfile.ZipFile(db.parent / "p.zip") as source:
+        files = {name: source.read(name) for name in source.namelist()}
+    legacy_version = "legacy064-" + version
+    schema = json.loads(files[f"{root}/schema.json"])
+    schema["format"] = legacy_version
+    files[f"{root}/schema.json"] = json.dumps(schema).encode()
+    manifest = json.loads(files[f"{root}/manifest.json"])
+    manifest["format"] = legacy_version
+    manifest["files"]["schema.json"]["bytes"] = len(files[f"{root}/schema.json"])
+    manifest["files"]["schema.json"]["sha256"] = hashlib.sha256(files[f"{root}/schema.json"]).hexdigest()
+    files[f"{root}/manifest.json"] = json.dumps(manifest).encode()
+    package = tmp_path / "old.zip"
+    with zipfile.ZipFile(package, "w") as target:
+        for name, data in files.items():
+            target.writestr(name, data)
+    if accepted:
+        info = import_dataset(package, tmp_path / "importado.db")
+        assert info["source_manifest"]["format"] == legacy_version
+        assert info["format"] == "import-v1"
+    else:
+        with pytest.raises(PackageError, match="formato"):
+            import_dataset(package, tmp_path / "incompativel.db")
+
+
 def test_receiving_machine_settings_do_not_change_interpretation(imported):
     from dataset_export.importer import load_interpretation
     from dataset_export.interpretation import InterpretationConflict, resolve_for_computation

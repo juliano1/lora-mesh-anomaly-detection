@@ -12,7 +12,7 @@ que usam o backend precisam de `scripts/requirements.txt`; `train_lstm.py` e
 | `import_dataset.py` | Reconstrói um pacote exportado como banco SQLite. |
 | `audit_dataset_export.py` | Confere um pacote contra o banco de origem e grava um relatório JSON. |
 | `monitor_mqtt.py` | Mostra as mensagens de um tópico do broker (`MQTT_USER`/`MQTT_PASS` do ambiente). |
-| `check_publication.py` | Triagem de segredos, dados pessoais e arquivos proibidos antes de publicar. |
+| `check_publication.py` | Triagem de segredos, dados pessoais e arquivos proibidos (também roda na CI). |
 | `extract_features.py`, `train_if.py`, `train_lstm.py`, `train_cascade.py`, `inject_anomalies.py` | Reprodução de um estudo anterior; têm defeitos conhecidos, descritos no cabeçalho de cada um. Não use para novas avaliações. |
 
 ## Exportação

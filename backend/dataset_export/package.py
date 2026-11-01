@@ -40,7 +40,9 @@ from dataset_export.slice import (BATCH, ExportError, create_target, finalize_sq
                                   materialize_slice, table)
 from dataset_export.snapshot import describe_source, snapshot_session
 
-FORMAT = "spec064-dataset-v1"
+from artifact_versions import version_matches
+
+FORMAT = "dataset-v1"
 MANIFEST_FILE = "manifest.json"
 # Tetos de leitura de pacotes recebidos (o zipfile não lê além do tamanho declarado).
 MAX_MANIFEST_BYTES = 16 * 1024 * 1024
@@ -611,7 +613,7 @@ def export_dataset(engine, request, out_zip, *, settings, sqlite_file=None, now=
     interpretation = InterpretationParams.for_export(request, settings)
     root = dataset_id_for(request, new_dataset_suffix() if dataset_suffix is None else dataset_suffix)
     timings = {}
-    workdir = Path(tempfile.mkdtemp(prefix="spec064_"))
+    workdir = Path(tempfile.mkdtemp(prefix="dataset_export_"))
     target = None
     own_partial = False
     try:
@@ -782,7 +784,7 @@ def verify_package(zip_path) -> tuple:
             manifest = json.loads(zf.read(f"{root}/{MANIFEST_FILE}"))
             if not isinstance(manifest, dict):
                 raise PackageError("manifesto deve ser um objeto JSON")
-            if manifest.get("format") != FORMAT or manifest.get("package_root") != root:
+            if not version_matches(manifest.get("format"), FORMAT) or manifest.get("package_root") != root:
                 raise PackageError("formato ou raiz desconhecidos no manifesto")
             export_kind = manifest.get("export_kind")
             if export_kind not in ("raw", "features", "full"):

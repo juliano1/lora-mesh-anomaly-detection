@@ -28,9 +28,9 @@ from sqlmodel import SQLModel
 EXPORT_TABLES = ("network", "node", "simulation_run", "telemetry", "neighbor")
 BATCH = 5000
 COMPOSITE_INDEXES = (
-    "CREATE INDEX IF NOT EXISTS ix_spec064_neighbor_node_ts ON neighbor (node_id, timestamp)",
-    "CREATE INDEX IF NOT EXISTS ix_spec064_telemetry_node_ts ON telemetry (node_id, timestamp)",
-    "CREATE INDEX IF NOT EXISTS ix_spec064_neighbor_node_addr_ts "
+    "CREATE INDEX IF NOT EXISTS ix_dataset_neighbor_node_ts ON neighbor (node_id, timestamp)",
+    "CREATE INDEX IF NOT EXISTS ix_dataset_telemetry_node_ts ON telemetry (node_id, timestamp)",
+    "CREATE INDEX IF NOT EXISTS ix_dataset_neighbor_node_addr_ts "
     "ON neighbor (node_id, neighbor_address, timestamp)",
 )
 

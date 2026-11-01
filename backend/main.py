@@ -43,14 +43,14 @@ logger = logging.getLogger(__name__)
 STARTUP_MIGRATIONS = (
     "add_hybrid_fields",
     "add_online_selection",
-    "spec063_add_lstm_config_fields",
+    "add_lstm_config_fields",
     "add_detector_procedence",
     "add_data_origin_and_simulation_run",
-    "spec056_add_user_is_admin",
-    "spec056_add_mlsettings_llm_fields",
-    "spec056_add_llm_analysis_fields",
-    "spec056_llm_analysis_nullable",
-    "spec056_backfill_legacy",
+    "add_user_is_admin",
+    "add_mlsettings_llm_fields",
+    "add_llm_analysis_fields",
+    "llm_analysis_nullable",
+    "backfill_legacy",
 )
 
 # Migrações das tabelas usadas pela ingestão MQTT e pelo detector, com o nome da função
@@ -359,7 +359,10 @@ def stop_simulation(node_id: int, session: Session = Depends(get_session)):
         "msg": "SIM_STOP",
         "msg_id": 9040,
     }
-    publish_to_downlink(mqtt_payload, node.network_id)
+    if not publish_to_downlink(mqtt_payload, node.network_id):
+        # Sem publicação, o firmware pode continuar simulando. Preservar o estado
+        # permite ao operador tentar novamente sem perder o intervalo de referência.
+        raise HTTPException(status_code=503, detail="Broker MQTT indisponível")
 
     from models import SimulationRun
     if node.current_sim_run_id:

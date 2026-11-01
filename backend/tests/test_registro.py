@@ -134,7 +134,7 @@ def test_t10_features_json_records_window_metadata():
     assert (stored["_rules_version"], stored["_definitions_version"],
             stored["_feature_schema_version"]) == (RULES_VERSION, DEFINITIONS_VERSION,
                                                    FEATURE_SCHEMA_VERSION)
-    assert stored["_registro_version"] == "spec069-registro-v1"
+    assert stored["_registro_version"] == "registro-v1"
 
 
 def test_t10_empty_unavailable_and_missing_features():
@@ -164,7 +164,7 @@ def session():
 def test_t10_pipeline_records_effective_window(session, monkeypatch):
     import ai.online.effective_config as effective
     from models import OnlineInference
-    from tests.test_spec067_ciclo_modelos import _detector
+    from tests.test_ciclo_modelos import _detector
     monkeypatch.setattr(effective, "resolve_effective_config",
                         lambda ml: SimpleNamespace(if_window_minutes=20, lstm_window_size=12,
                                                      lstm_window_minutes=5))

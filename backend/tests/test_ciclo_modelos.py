@@ -304,6 +304,19 @@ def test_bundle_roundtrip_restores_models_and_calibration(tmp_path):
     assert load_latest_bundle(7, p.model_signature, str(tmp_path)) is None
 
 
+def test_bundle_accepts_old_version_prefix_but_rejects_other_feature_versions(tmp_path):
+    from ai.online.bundles import load_latest_bundle, save_bundle
+    p, ml, X = _trained_pair()
+    manifest = save_bundle(p, 7, str(tmp_path), "manual")
+    path = tmp_path / "network_7" / manifest["bundle_id"] / "manifest.json"
+    manifest["feature_schema_version"] = "legacy065-" + manifest["feature_schema_version"]
+    path.write_text(json.dumps(manifest))
+    assert load_latest_bundle(7, p.model_signature, str(tmp_path)) is not None
+    manifest["feature_schema_version"] = "legacy065-features-v1"
+    path.write_text(json.dumps(manifest))
+    assert load_latest_bundle(7, p.model_signature, str(tmp_path)) is None
+
+
 
 def test_bundle_loader_refuses_redirected_payloads(tmp_path):
     """O manifesto não escolhe o arquivo carregado e links simbólicos não são seguidos."""

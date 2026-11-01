@@ -1,4 +1,4 @@
-# backend/tests/test_spec55_simulation.py
+# backend/tests/test_simulation.py
 """Testes de _close_simulation_run e do watchdog das simulações."""
 import pytest
 from datetime import datetime, timedelta
@@ -50,6 +50,27 @@ def test_close_simulation_run_sets_fields(session_with_run):
     assert node.sim_ended_at is not None
 
 
+@pytest.mark.parametrize("published", [False, True])
+def test_stop_simulation_only_closes_run_after_publication(session_with_run, monkeypatch, published):
+    import main
+    from fastapi import HTTPException
+    from models import Node, SimulationRun
+    session, run_id = session_with_run
+    sent = []
+    monkeypatch.setattr(main, "publish_to_downlink",
+                        lambda payload, network_id: sent.append((payload, network_id)) or published)
+    if published:
+        assert main.stop_simulation(1, session)["status"] == "ok"
+    else:
+        with pytest.raises(HTTPException) as exc:
+            main.stop_simulation(1, session)
+        assert exc.value.status_code == 503
+    session.expire_all()
+    assert session.get(Node, 1).sim_mode is (not published)
+    assert (session.get(SimulationRun, run_id).ended_at is not None) is published
+    assert len(sent) == 1 and sent[0][1] == 1
+
+
 def test_watchdog_expires_old_run(engine):
     from models import Node, Network, SimulationRun
     from mqtt_service_sync import _simulation_watchdog_tick
@@ -90,7 +111,7 @@ def _orphan_run(engine, seconds_ago):
 
 
 def test_watchdog_retries_sim_start_between_60_and_120s(engine, monkeypatch):
-    """d715965: entre 60 e 120 s sem beacons o watchdog reenvia SIM_START e mantém o run aberto
+    """Entre 60 e 120 s sem beacons o watchdog reenvia SIM_START e mantém o run aberto
     (o downlink LoRa pode falhar em silêncio). Chama o watchdog real."""
     import mqtt_service_sync
     from models import SimulationRun

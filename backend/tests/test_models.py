@@ -1,4 +1,4 @@
-# backend/tests/test_spec55_models.py
+# backend/tests/test_models.py
 """Testes dos campos de simulação e de origem dos dados nos modelos."""
 import pytest
 from sqlalchemy import create_engine

@@ -396,7 +396,7 @@ def test_audit_reports_compared_items(baseline):
     compared = checks["audit:compared"]["observed"]
     assert all(compared[k] > 0 for k in ("values:telemetry", "values:neighbor", "values:simulation_run",
                                           "features:valid_windows", "features:values", "readme:python_blocks"))
-    cases = checks["origin:spec_cases"]["observed"]
+    cases = checks["origin:case_examples"]["observed"]
     assert (cases["mixed"]["windows"] and cases["reverse_synthetic"]["windows"]
             and cases["reverse_simulation"]["windows"])
     for cid in ("manifest:code", "manifest:features", "manifest:resolved", "zip:name",
@@ -433,7 +433,7 @@ def test_legacy_case_ignores_interval_mirroring_a_simulation_run(export_source, 
                      and "legacy_node:2" not in r["simulation_run_ids"]]
     true_legacy = [r for r in rows if "legacy_node:2" in r["simulation_run_ids"]]
     assert only_mirrored and true_legacy
-    assert checks["origin:spec_cases"]["observed"]["legacy"]["windows"] == len(true_legacy)
+    assert checks["origin:case_examples"]["observed"]["legacy"]["windows"] == len(true_legacy)
 
 
 # model_input_columns ausente falha (não some)
@@ -566,7 +566,7 @@ def test_margin_case_requires_simulation_overlap_exclusion(export_source, tmp_pa
                       and r["synthetic_record_count"] == "0"
                       and r["reference_exclusion_reason"] == "features_not_valid"]
     assert margin_invalid   # pré-condição: janelas inválidas que só a margem liga à simulação 11
-    assert checks["origin:spec_cases"]["observed"]["margin_only"]["windows"] == 0
+    assert checks["origin:case_examples"]["observed"]["margin_only"]["windows"] == 0
 
 
 # Pacote adulterado gera relatório e rc=1, não erro de execução

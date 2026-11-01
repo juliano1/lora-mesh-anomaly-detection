@@ -43,15 +43,15 @@ def test_legacy_database_missing_columns_is_upgraded(tmp_path):
     engine.dispose()
 
 
-@pytest.mark.skipif(not __import__("os").environ.get("SPEC064_PG_URL"),
-                    reason="defina SPEC064_PG_URL (PostgreSQL descartável de teste)")
+@pytest.mark.skipif(not __import__("os").environ.get("TEST_POSTGRES_URL"),
+                    reason="defina TEST_POSTGRES_URL (PostgreSQL descartável de teste)")
 def test_startup_migrations_on_postgres_are_idempotent():
     import os
     import uuid
     from sqlalchemy import text
     import models  # noqa: F401
     from main import run_startup_migrations
-    url = os.environ["SPEC064_PG_URL"]
+    url = os.environ["TEST_POSTGRES_URL"]
     schema = f"mig_{uuid.uuid4().hex[:8]}"  # schema descartável; node↔simulation_run impede drop_all
     admin = create_engine(url)
     with admin.begin() as conn:

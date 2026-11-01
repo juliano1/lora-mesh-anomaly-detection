@@ -1,4 +1,5 @@
 # Credenciais e configuração local
+.aws/
 .env
 .env.*
 !.env.example
@@ -27,6 +28,7 @@ htmlcov/
 
 # Dados locais, modelos, pacotes exportados e backups
 /data/
+*.csv
 *.zip
 *.parquet
 *.joblib

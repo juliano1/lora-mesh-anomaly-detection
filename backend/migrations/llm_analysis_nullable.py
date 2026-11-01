@@ -10,6 +10,8 @@ Idempotente:
 - SQLite: detecta se 'verdict' ainda é NOT NULL via PRAGMA antes de recriar e retoma a
   cópia se uma execução anterior parou com a tabela antiga renomeada.
 """
+import re
+
 from sqlalchemy import text
 from sqlalchemy.schema import DefaultClause
 
@@ -41,11 +43,21 @@ def _sqlite_server_defaults(conn, table: str) -> dict:
     return out
 
 
-OLD = "llm_analysis_old_spec056"
+OLD = "llm_analysis_backup"
 
 
 def _tables(conn) -> set:
     return {r[0] for r in conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))}
+
+
+def _backup_table(tables: set[str]) -> str:
+    """Encontra uma cópia interrompida, inclusive com o antigo sufixo numerado."""
+    candidates = sorted(t for t in tables if t == OLD or re.fullmatch(
+        r"llm_analysis_old_[a-z]+[0-9]{2,3}", t
+    ))
+    if len(candidates) > 1:
+        raise RuntimeError("Mais de uma cópia de llm_analysis: resolva manualmente antes de migrar")
+    return candidates[0] if candidates else OLD
 
 
 def upgrade(engine) -> None:
@@ -62,12 +74,13 @@ def upgrade(engine) -> None:
     # SQLite: recriação de tabela
     with engine.connect() as conn:
         tables = _tables(conn)
-        if OLD in tables:
+        old_table = _backup_table(tables)
+        if old_table in tables:
             # Execução anterior interrompida depois do RENAME: retoma a partir da antiga.
-            existing_defaults = _sqlite_server_defaults(conn, OLD)
+            existing_defaults = _sqlite_server_defaults(conn, old_table)
             if "llm_analysis" in tables:
                 if conn.execute(text("SELECT COUNT(*) FROM llm_analysis")).scalar():
-                    raise RuntimeError(f"{OLD} e llm_analysis têm dados: resolva manualmente")
+                    raise RuntimeError(f"{old_table} e llm_analysis têm dados: resolva manualmente")
                 conn.execute(text("DROP TABLE llm_analysis"))
                 conn.commit()
         else:
@@ -84,7 +97,7 @@ def upgrade(engine) -> None:
             # Sem o modo legado, o RENAME reescreveria as FKs de llm_human_review para a
             # tabela antiga, que é apagada no fim.
             conn.execute(text("PRAGMA legacy_alter_table=ON"))
-            conn.execute(text(f"ALTER TABLE llm_analysis RENAME TO {OLD}"))
+            conn.execute(text(f"ALTER TABLE llm_analysis RENAME TO {old_table}"))
             conn.execute(text("PRAGMA legacy_alter_table=OFF"))
             conn.commit()
 
@@ -122,7 +135,7 @@ def upgrade(engine) -> None:
             table.c[col_name].server_default = prev
 
     with engine.connect() as conn:
-        old_cols = _columns_in_order(conn, OLD)
+        old_cols = _columns_in_order(conn, old_table)
         new_cols = _columns_in_order(conn, "llm_analysis")
         shared = [c for c in old_cols if c in new_cols]
         # Preserva o timestamp original quando existir; caso contrário (linha antiga
@@ -134,7 +147,7 @@ def upgrade(engine) -> None:
         shared_list = ", ".join(shared)
         conn.execute(text(
             f"INSERT INTO llm_analysis ({shared_list}) "
-            f"SELECT {select_cols} FROM {OLD}"
+            f"SELECT {select_cols} FROM {old_table}"
         ))
-        conn.execute(text(f"DROP TABLE {OLD}"))
+        conn.execute(text(f"DROP TABLE {old_table}"))
         conn.commit()

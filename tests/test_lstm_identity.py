@@ -36,12 +36,20 @@ def test_compatible_identity_loads_even_with_other_revision(artifact):
     assert mod.LSTMAutoencoderModel.load(7).is_trained
 
 
+def test_previous_version_prefix_preserves_model_compatibility(artifact):
+    mod, path = artifact
+    meta = json.loads(path.read_text())
+    meta["feature_schema_version"] = "legacy065-" + meta["feature_schema_version"]
+    path.write_text(json.dumps(meta))
+    assert mod.LSTMAutoencoderModel.load(7).is_trained
+
+
 @pytest.mark.parametrize("change", ["version", "order"])
 def test_v1_or_reordered_names_refused(artifact, change):
     mod, path = artifact
     meta = json.loads(path.read_text())
     if change == "version":
-        meta["feature_schema_version"] = "spec064-features-v1"
+        meta["feature_schema_version"] = "features-v1"
     else:
         meta["feature_names"].reverse()
     path.write_text(json.dumps(meta))

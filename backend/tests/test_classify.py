@@ -30,7 +30,7 @@ def test_ax_keeps_not_evaluable_reasons():
     assert out[0]["anomaly_type"] == "AX"
     rules = out[0]["evidence"]["rules"]
     assert rules["criteria"]["A2"]["state"] == "not_evaluable"
-    assert rules["rules_version"] == "spec065-rules-v1"
+    assert rules["rules_version"] == "rules-v1"
 
 
 def test_a5_first_and_texts_without_causal_claims():

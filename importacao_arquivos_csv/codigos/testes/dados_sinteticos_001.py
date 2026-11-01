@@ -66,7 +66,7 @@ def make_rows(nodes=(1, 2, 3), n: int = N, seed: int = 0) -> list[dict]:
                 "feature_status": "valid", "invalid_reason": None, "defaulted_features": "[]",
                 "unavailable_features": "{}", "origin_status": "unknown", "simulation_overlap": "0",
                 "simulation_run_ids": "[]", "reference_eligible_by_policy": "1",
-                "reference_exclusion_reason": None, "feature_schema_version": "spec065-features-v2",
+                "reference_exclusion_reason": None, "feature_schema_version": "features-v2",
                 "extractor_revision": "sha256:teste", "extraction_policy": "all_origins_v1",
             })
     return rows
@@ -99,7 +99,7 @@ def write_package(folder: Path, rows: list[dict], *, columns=COLUMNS, model_inpu
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     write_csv(folder / "features.csv", rows, columns)
-    schema = {"format": "spec064-dataset-v1",
+    schema = {"format": "dataset-v1",
               "files": {"features.csv": {"table": "features",
                                          "columns": [{"name": c} for c in columns],
                                          "model_input_columns": list(model_inputs)}}}
@@ -109,11 +109,11 @@ def write_package(folder: Path, rows: list[dict], *, columns=COLUMNS, model_inpu
              for name in ("features.csv", "schema.json")}
     files["features.csv"]["rows"] = len(rows)
     manifest = {
-        "format": "spec064-dataset-v1", "dataset_id": dataset_id, "export_kind": "features",
+        "format": "dataset-v1", "dataset_id": dataset_id, "export_kind": "features",
         "created_at": "2026-01-02T00:00:00Z", "campaign_id": None,
         "source": {"source_id": "fonte-teste"},
         "interpretation": {"source_id": "fonte-teste", "window_seconds": W, "step_seconds": S},
-        "features": {"feature_schema_version": "spec065-features-v2",
+        "features": {"feature_schema_version": "features-v2",
                      "extractor_revision": "sha256:teste", "extraction_policy": "all_origins_v1",
                      "feature_names": list(FEATURES), "rows": len(rows)},
         "files": files,

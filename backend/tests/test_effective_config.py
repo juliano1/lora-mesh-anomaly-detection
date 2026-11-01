@@ -69,7 +69,7 @@ def test_resolve_accepts_plain_objects_and_is_idempotent():
 
 
 def test_migration_adds_nullable_columns_idempotently():
-    from migrations.spec063_add_lstm_config_fields import upgrade
+    from migrations.add_lstm_config_fields import upgrade
     eng = create_engine("sqlite:///:memory:")
     with eng.connect() as c:
         c.execute(text("CREATE TABLE mlsettings (id INTEGER PRIMARY KEY, ml_lstm_window INTEGER)"))

@@ -126,7 +126,7 @@ def test_simulation_runs_telemetry_count_is_synthetic(packages):
 
 def test_raw_descriptions_have_no_internal_prefixes_or_english(packages):
     schema = json.loads(_read(packages, "full", "schema.json"))
-    banned = ("FEAT-", "SPEC-004", "SPEC-005", "True if", "UTC timestamp", "Simulated")
+    banned = ("FEAT-", "True if", "UTC timestamp", "Simulated")
     for name in ("telemetry.csv", "neighbors.csv", "nodes.csv", "networks.csv", "simulation_runs.csv"):
         for col in schema["files"][name]["columns"]:
             assert not any(b in col["description"] for b in banned), (name, col["name"])

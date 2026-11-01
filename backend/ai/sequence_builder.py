@@ -5,7 +5,7 @@ O IF opera sobre um vetor por janela (stateless). O LSTM-AE precisa de sequênci
     shape (W, n_features) — para inferência de um nó
     shape (N, W, n_features) — para treino (sliding windows)
 
-Política única de lacunas (treino, calibração, replay e inferência):
+Política única de lacunas (treino, calibração e inferência):
     - primeira sub-janela ausente → rejeita (`missing_initial_context`); nunca zeros
     - após observação válida, forward-fill até max_impute_gap sub-janelas
       consecutivas, com máscara observado/imputado
